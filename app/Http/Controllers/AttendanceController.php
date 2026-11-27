@@ -16,13 +16,14 @@ class AttendanceController extends Controller {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $actorId = $actor->getAuthIdentifier();
+        $ipAddress = $request->ip();
         $data = $request->validate(['pn_id'=>'nullable|string','remarks'=>'nullable|string|max:250']);
         $target = $actor->isStaff() && $request->filled('pn_id') ? User::where('pn_id',$data['pn_id'])->where('role','student')->firstOrFail() : $actor;
-        DB::transaction(function () use ($target,$data,$actorId) {
+        DB::transaction(function () use ($target,$data,$actorId,$ipAddress) {
             $open = Attendance::where('student_id',$target->getKey())->whereNull('time_out')->lockForUpdate()->first();
             if ($open) abort(422, 'This scholar already has an open attendance session. Record Time Out first.');
             $row = Attendance::create(['student_id'=>$target->getKey(),'date'=>now()->toDateString(),'time_in'=>now(),'status'=>'inside','time_in_by'=>$actorId,'remarks'=>$data['remarks'] ?? null]);
-            AuditLog::create(['user_id'=>$actorId,'action'=>'time_in','target_type'=>'attendance','target_id'=>$row->getKey(),'details'=>['student'=>$target->pn_id]]);
+            AuditLog::create(['user_id'=>$actorId,'action'=>'time_in','target_type'=>'attendance','target_id'=>$row->getKey(),'details'=>['student'=>$target->pn_id],'ip_address'=>$ipAddress]);
         });
         return back()->with('success','Time In recorded successfully.');
     }
@@ -35,7 +36,7 @@ class AttendanceController extends Controller {
         $row = Attendance::where('student_id',$target->getKey())->whereNull('time_out')->latest('time_in')->first();
         if (!$row) return back()->withErrors(['attendance'=>'No open Time In record was found.']);
         $row->update(['time_out'=>now(),'status'=>'outside','time_out_by'=>$actorId]);
-        AuditLog::create(['user_id'=>$actorId,'action'=>'time_out','target_type'=>'attendance','target_id'=>$row->getKey(),'details'=>['student'=>$target->pn_id]]);
+        AuditLog::create(['user_id'=>$actorId,'action'=>'time_out','target_type'=>'attendance','target_id'=>$row->getKey(),'details'=>['student'=>$target->pn_id],'ip_address'=>$request->ip()]);
         return back()->with('success','Time Out recorded successfully.');
     }
     public function index(Request $request) {

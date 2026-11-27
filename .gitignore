@@ -18,4 +18,5 @@ Thumbs.db
 /storage/framework/testing
 /storage/framework/views
 /storage/logs
+/database/database.sqlite
 /bootstrap/cache/*.php

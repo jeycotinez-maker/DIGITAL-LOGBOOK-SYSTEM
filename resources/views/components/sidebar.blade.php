@@ -14,5 +14,11 @@
  <a href="{{ route('attendance.index') }}" class="{{ request()->routeIs('attendance.index')?'active':'' }}">◷ <span>Logbook Records</span></a>
  <a href="{{ route('reports.index') }}" class="{{ request()->routeIs('reports.*')?'active':'' }}">▤ <span>Reports</span></a>
  @endif
- @if(auth()->user()->role==='admin')<a href="{{ route('settings.academic') }}" class="{{ request()->routeIs('settings.*')?'active':'' }}">⚙ <span>Academic Control</span></a>@endif
+ @if(auth()->user()->role==='admin')
+ <a href="{{ route('system.database') }}" class="{{ request()->routeIs('system.database')?'active':'' }}">▦ <span>Database</span></a>
+ <a href="{{ route('system.logs') }}" class="{{ request()->routeIs('system.logs')?'active':'' }}">≡ <span>System Logs</span></a>
+ <a href="{{ route('system.backups') }}" class="{{ request()->routeIs('system.backups*')?'active':'' }}">⇩ <span>Backups</span></a>
+ <a href="{{ route('system.security') }}" class="{{ request()->routeIs('system.security')?'active':'' }}">◇ <span>Security</span></a>
+ <a href="{{ route('settings.academic') }}" class="{{ request()->routeIs('settings.*')?'active':'' }}">⚙ <span>Academic Control</span></a>
+ @endif
 </nav><div class="side-bottom"><form method="POST" action="{{ route('logout') }}">@csrf<button>⇥ <span>Logout</span></button></form></div></aside>

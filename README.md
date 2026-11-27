@@ -50,9 +50,11 @@ These are local development-only accounts created by `php artisan db:seed`. Chan
 - Time In / Time Out with server timestamps and duplicate open-session protection
 - Scholar's own read-only attendance history
 - Staff/admin scholar directory and attendance monitoring
+- Live administrator dashboard with batch/section/status filters, PN ID search, pagination, latest attendance times, and inside/outside/not-logged-in status
+- Administrator database diagnostics, searchable system audit logs, SQLite snapshot downloads, and application security configuration checks
 - Date-filtered attendance report with CSV export
 - Administrator academic year, semester, and update-window settings
-- Audit records for registration, attendance actions, and academic settings changes
+- Audit records for registration, login/logout, attendance actions, and academic settings changes
 - Responsive navy-and-white interface
 
 ## Important scope and setup notes
@@ -61,12 +63,14 @@ These are local development-only accounts created by `php artisan db:seed`. Chan
 - The supplied SRS specifies PDF and Excel exports. This baseline currently provides CSV export only; PDF/XLSX generation needs an approved library and should be added before acceptance.
 - The academic update window is configurable and audited, but scholar-side academic update submission/approval screens are not yet implemented.
 - Attendance status vocabulary and edge cases (late threshold, overnight sessions, return trips) require PNPh confirmation as stated in the SRS.
-- Staff/admin demo accounts are seeded for local testing. Public staff/admin self-registration is deliberately disabled.
+- The administrator dashboard determines each student's status from their latest attendance session; students without an attendance record appear as "Not logged in." Database backup downloads currently support SQLite and create a consistent snapshot.
+- `/register` opens the role chooser; select Administrator or Staff to use the corresponding short registration form. Staff/admin self-registration is enabled for local use and must be restricted before production deployment.
 - Do not use real scholar personal data in development. Follow PNPh approval and applicable privacy requirements before deployment.
 - The supplied original frontend files are retained in `resources/views`/`public` where applicable; the application has been reorganized into Laravel's standard structure.
 
 ## Troubleshooting
 - `Could not open input file: artisan`: terminal is not in the extracted project root. Run `dir artisan`; if it is missing, open the correct folder.
 - `vendor/autoload.php` missing: run `composer install`.
+- Registration shows `419 Page Expired`: reload the role-specific form and submit it using the same browser address (for example, keep using `127.0.0.1`, not a mix of `localhost` and `127.0.0.1`). A stale registration form now returns to its form with a retry message.
 - Database connection error: start MySQL and verify `.env` credentials/database name.
 - `APP_KEY` missing: run `php artisan key:generate`.

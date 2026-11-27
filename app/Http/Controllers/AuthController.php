@@ -9,8 +9,10 @@ use Illuminate\Validation\Rules\Password;
 class AuthController extends Controller {
     public function roles(string $mode) { return view('auth.roles', compact('mode')); }
     public function showLogin(?string $role = null) { return view('auth.login', compact('role')); }
-    public function showRegister(?string $role = 'student') {
-        return view('auth.register', compact('role'));
+    public function showRegister(?string $role = null) {
+        if (!$role) return redirect()->route('roles', ['mode'=>'signup']);
+        return response()->view('auth.register', compact('role'))
+            ->header('Cache-Control', 'no-store, private, max-age=0');
     }
     public function login(Request $request) {
         $data = $request->validate(['identity'=>'required|string','password'=>'required|string','role'=>'nullable|in:student,staff,admin']);
@@ -24,6 +26,14 @@ class AuthController extends Controller {
             Auth::logout(); $request->session()->invalidate(); $request->session()->regenerateToken();
             return back()->withErrors(['identity'=>'This account does not belong to the selected role.']);
         }
+        $user = Auth::user();
+        AuditLog::create([
+            'user_id'=>$user->id,
+            'action'=>'user_logged_in',
+            'target_type'=>'user',
+            'target_id'=>$user->id,
+            'ip_address'=>$request->ip()
+        ]);
         return redirect()->intended(route('dashboard'));
     }
     public function register(Request $request) {
@@ -71,7 +81,8 @@ class AuthController extends Controller {
             'action'=>$data['role'].'_registered',
             'target_type'=>'user',
             'target_id'=>$user->id,
-            'details'=>$data['role'] === 'student' ? ['pn_id'=>$user->pn_id] : null
+            'details'=>$data['role'] === 'student' ? ['pn_id'=>$user->pn_id] : null,
+            'ip_address'=>$request->ip()
         ]);
         $message = $data['role'] === 'student'
             ? 'Account created. Your PN ID is '.$user->pn_id.'.'
@@ -79,6 +90,16 @@ class AuthController extends Controller {
         return redirect()->route('dashboard')->with('success',$message);
     }
     public function logout(Request $request) {
+        $user = Auth::user();
+        if ($user) {
+            AuditLog::create([
+                'user_id'=>$user->id,
+                'action'=>'user_logged_out',
+                'target_type'=>'user',
+                'target_id'=>$user->id,
+                'ip_address'=>$request->ip()
+            ]);
+        }
         Auth::logout(); $request->session()->invalidate(); $request->session()->regenerateToken();
         return redirect()->route('home');
     }
